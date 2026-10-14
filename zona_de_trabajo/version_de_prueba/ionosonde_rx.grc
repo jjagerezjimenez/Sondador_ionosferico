@@ -1,0 +1,1128 @@
+options:
+  parameters:
+    author: Juanjo
+    catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: 'Receptor del sondador ionosferico: Golay 16 bits + QCC + integracion
+      coherente + ionograma (Red Pitaya SDRlab 122-16). GUI en ionosonde_gui.py'
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: ionosonde_rx
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: Sondador ionosferico - Receptor Golay/QCC (Red Pitaya)
+    window_size: (1500,920)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: K
+  id: variable
+  parameters:
+    comment: 'Parejas A/B integradas.
+
+      Fijo en ejecucion.'
+    value: '25'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [920, 12]
+    rotation: 0
+    state: enabled
+- name: alineacion
+  id: variable
+  parameters:
+    comment: 'retardo de alineacion
+
+      del disparo [muestras]'
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1008, 204]
+    rotation: 0
+    state: enabled
+- name: c_luz
+  id: variable
+  parameters:
+    comment: Velocidad de la luz [m/s]
+    value: '299792458.0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1032, 12]
+    rotation: 0
+    state: enabled
+- name: code_A
+  id: variable
+  parameters:
+    comment: Codigo Golay A
+    value: '[1, 1, 1, -1, 1, 1, -1, 1, 1, 1, 1, -1, -1, -1, 1, -1]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [216, 108]
+    rotation: 0
+    state: enabled
+- name: code_B
+  id: variable
+  parameters:
+    comment: Codigo Golay B
+    value: '[1, 1, 1, -1, 1, 1, -1, 1, -1, -1, -1, 1, 1, 1, -1, 1]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [520, 108]
+    rotation: 0
+    state: enabled
+- name: dh_km
+  id: variable
+  parameters:
+    comment: 'km por muestra = 0.7495
+
+      (h'' = c t / 2)'
+    value: c_luz / (2.0 * samp_rate) / 1000.0
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1160, 12]
+    rotation: 0
+    state: enabled
+- name: f_fija
+  id: variable
+  parameters:
+    comment: frecuencia fija [MHz]
+    value: '5.0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [352, 204]
+    rotation: 0
+    state: enabled
+- name: f_fin
+  id: variable
+  parameters:
+    comment: fin barrido [MHz]
+    value: '20.0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [560, 204]
+    rotation: 0
+    state: enabled
+- name: f_ini
+  id: variable
+  parameters:
+    comment: inicio barrido [MHz]
+    value: '1.0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [464, 204]
+    rotation: 0
+    state: enabled
+- name: h_off
+  id: variable
+  parameters:
+    comment: 'Retardo del correlador:
+
+      eco a h -> muestra h/dh + h_off'
+    value: n_chips * spb - 1
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1328, 12]
+    rotation: 0
+    state: enabled
+- name: integracion
+  id: variable
+  parameters:
+    comment: '0 = coherente
+
+      1 = incoherente'
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [768, 204]
+    rotation: 0
+    state: enabled
+- name: modo_barrido
+  id: variable
+  parameters:
+    comment: 'Panel de control (GUI):
+
+      1 = barrido, 0 = fija'
+    value: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [216, 204]
+    rotation: 0
+    state: enabled
+- name: n_chips
+  id: variable
+  parameters:
+    comment: Chips por codigo Golay
+    value: '16'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [696, 12]
+    rotation: 0
+    state: enabled
+- name: n_h
+  id: variable
+  parameters:
+    comment: 'Alturas por perfil: 0..2398 km.
+
+      3200 = 2^7*25 -> buffers chicos
+
+      (con 3333 cada buffer vectorial
+
+      ocupa 218 MB en Windows)'
+    value: '3200'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1488, 12]
+    rotation: 0
+    state: enabled
+- name: n_vec
+  id: variable
+  parameters:
+    comment: 'Muestras por disparo (PRT)
+
+      = 3333'
+    value: int(samp_rate // prf)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [552, 12]
+    rotation: 0
+    state: enabled
+- name: paso_mhz
+  id: variable
+  parameters:
+    comment: paso barrido [MHz]
+    value: '0.1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [656, 204]
+    rotation: 0
+    state: enabled
+- name: prf
+  id: variable
+  parameters:
+    comment: 'PRF nominal [Hz]. OJO: el TX debe
+
+      disparar cada n_vec muestras
+
+      (PRF real = samp_rate/n_vec)'
+    value: '60'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [360, 12]
+    rotation: 0
+    state: enabled
+- name: rp_device
+  id: variable
+  parameters:
+    comment: 'Dispositivo IIO del ADC.
+
+      Verificar con:
+
+      iio_info -u ip:192.168.1.100'
+    value: '''rp-adc'''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1560, 108]
+    rotation: 0
+    state: enabled
+- name: rp_uri
+  id: variable
+  parameters:
+    comment: URI libiio de la Red Pitaya (iiod)
+    value: '''ip:192.168.1.100'''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1416, 108]
+    rotation: 0
+    state: enabled
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: 'Muestreo en banda base [S/s]
+
+      (DDC en la FPGA)'
+    value: '200000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [216, 12]
+    rotation: 0
+    state: enabled
+- name: spb
+  id: variable
+  parameters:
+    comment: 'Muestras por chip
+
+      (30 us x 200 kS/s)'
+    value: '6'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [808, 12]
+    rotation: 0
+    state: enabled
+- name: swap_ab
+  id: variable
+  parameters:
+    comment: '1 = correladores A/B
+
+      intercambiados'
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [880, 204]
+    rotation: 0
+    state: enabled
+- name: taps_A
+  id: variable
+  parameters:
+    comment: 'Filtro adaptado A: codigo
+
+      invertido y sobremuestreado x6'
+    value: np.repeat(code_B if swap_ab else code_A, spb)[::-1].astype(complex).tolist()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [824, 108]
+    rotation: 0
+    state: enabled
+- name: taps_B
+  id: variable
+  parameters:
+    comment: Filtro adaptado B
+    value: np.repeat(code_A if swap_ab else code_B, spb)[::-1].astype(complex).tolist()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1120, 108]
+    rotation: 0
+    state: enabled
+- name: zmq_addr
+  id: variable
+  parameters:
+    comment: Perfiles hacia ionogram_gui.py
+    value: '''tcp://127.0.0.1:5555'''
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1720, 108]
+    rotation: 0
+    state: enabled
+- name: alineacion_disparo
+  id: blocks_delay
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Alineacion del disparo:
+
+      retrasa N muestras para que
+
+      cada vector empiece con el TX'
+    delay: alineacion
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_ports: '1'
+    showports: 'False'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [640, 376]
+    rotation: 0
+    state: enabled
+- name: blocks_float_to_complex_0
+  id: blocks_float_to_complex
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [448, 376]
+    rotation: 0
+    state: enabled
+- name: blocks_short_to_float_0
+  id: blocks_short_to_float
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    scale: '32768'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [272, 352]
+    rotation: 0
+    state: enabled
+- name: blocks_short_to_float_1
+  id: blocks_short_to_float
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    scale: '32768'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [272, 424]
+    rotation: 0
+    state: enabled
+- name: correlador_A
+  id: fir_filter_xxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Correlador A
+
+      (filtro adaptado)'
+    decim: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_delay: '0'
+    taps: taps_A
+    type: ccc
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1320, 312]
+    rotation: 0
+    state: enabled
+- name: correlador_B
+  id: fir_filter_xxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Correlador B
+
+      (filtro adaptado)'
+    decim: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_delay: '0'
+    taps: taps_B
+    type: ccc
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1320, 448]
+    rotation: 0
+    state: enabled
+- name: envolvente_c
+  id: blocks_complex_to_mag
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: '|Z|'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: n_h
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2384, 304]
+    rotation: 0
+    state: enabled
+- name: envolvente_i
+  id: blocks_complex_to_mag
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: '|Z| de cada disparo'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1960, 488]
+    rotation: 0
+    state: enabled
+- name: iio_device_source_0
+  id: iio_device_source
+  parameters:
+    affinity: ''
+    alias: ''
+    buffer_size: n_vec * 4
+    channels: '[''voltage0'', ''voltage1'']'
+    comment: 'Red Pitaya SDRlab 122-16 via iiod.
+
+      Canal voltage0 = I, voltage1 = Q.'
+    decimation: '1'
+    device: rp_device
+    device_phy: ''''''
+    len_tag_key: packet_len
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    params: '[]'
+    uri: rp_uri
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 360]
+    rotation: 0
+    state: enabled
+- name: import_0
+  id: import
+  parameters:
+    alias: ''
+    comment: ''
+    imports: import numpy as np
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 116]
+    rotation: 0
+    state: enabled
+- name: integrador_coherente
+  id: blocks_integrate_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'INTEGRACION COHERENTE:
+
+      suma K perfiles I/Q'
+    decim: K
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: complex
+    vlen: n_h
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2168, 296]
+    rotation: 0
+    state: enabled
+- name: integrador_incoherente
+  id: blocks_integrate_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'INTEGRACION INCOHERENTE:
+
+      suma K perfiles |Z|'
+    decim: K
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: n_h
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2368, 480]
+    rotation: 0
+    state: enabled
+- name: interfaz_grafica
+  id: snippet
+  parameters:
+    alias: ''
+    code: '# Interfaz grafica: panel de control + pestanas de graficos.
+
+      # El codigo esta en ionosonde_gui.py (misma carpeta que este .grc).
+
+      import os, sys
+
+      sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+      import ionosonde_gui
+
+      self._gui = ionosonde_gui.instalar(self)'
+    comment: 'Arma la GUI (controles + pestanas)
+
+      definida en ionosonde_gui.py'
+    priority: '0'
+    section: main_after_init
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 204]
+    rotation: 0
+    state: enabled
+- name: ionograma
+  id: epy_block
+  parameters:
+    _source_code: "\"\"\"\nArmado del ionograma.\n\nRecibe cada perfil de altura ya\
+      \ integrado (vector de n_h alturas,\nh = i * dh_km) y, con el tag 'sondeo' que\
+      \ viaja junto al perfil, sabe a que\nfrecuencia corresponde. Guarda:\n  * matriz_db[f,\
+      \ h]: ionograma en dB sobre el piso de ruido de cada perfil\n    (piso = mediana\
+      \ del perfil).\n  * traza_h[f]: altura del eco mas fuerte (si supera 'umbral_db').\n\
+      \  * ultimo: el ultimo perfil recibido (lineal y en dB) con su frecuencia.\n\
+      \  * historial: los ultimos perfiles en dB (para el grafico altura-tiempo).\n\
+      La interfaz grafica lee estos atributos.\n\"\"\"\nimport collections\nimport\
+      \ threading\nimport numpy as np\nimport pmt\nfrom gnuradio import gr\n\nTAG_SONDEO\
+      \ = pmt.intern('sondeo')\n\n\nclass blk(gr.sync_block):\n    \"\"\"Armado del\
+      \ ionograma h'(f): ubica cada perfil integrado en la columna de su\n    frecuencia\
+      \ (leida del tag 'sondeo') y detecta el eco mas fuerte.\"\"\"\n\n    def __init__(self,\
+      \ n_h=3200, dh_km=0.7494811, f_min=1.0, f_max=20.0, df_grilla=0.05,\n      \
+      \           umbral_db=12.0, h_min_km=80.0):\n        gr.sync_block.__init__(self,\
+      \ name='Armado del ionograma',\n                               in_sig=[(np.float32,\
+      \ int(n_h))], out_sig=None)\n        self.n_h = int(n_h)\n        self.dh_km\
+      \ = float(dh_km)\n        self.f_min, self.f_max, self.df = float(f_min), float(f_max),\
+      \ float(df_grilla)\n        self.n_f = int(round((self.f_max - self.f_min) /\
+      \ self.df)) + 1\n        self.umbral_db = umbral_db\n        self._i_hmin =\
+      \ int(np.ceil(float(h_min_km) / self.dh_km))\n        self.lock = threading.Lock()\n\
+      \        self._info = {}\n        self.contador = 0\n        self.ultimo = None\
+      \                                 # (contador, info, perfil_lin, perfil_db)\n\
+      \        self.historial = collections.deque(maxlen=200)     # (info, perfil_db)\n\
+      \        self.limpiar()\n\n    def limpiar(self):\n        with self.lock:\n\
+      \            self.matriz_db = np.full((self.n_f, self.n_h), np.nan, np.float32)\n\
+      \            self.traza_h = np.full(self.n_f, np.nan)\n            self.traza_db\
+      \ = np.full(self.n_f, np.nan)\n\n    def columnas(self, f_mhz, paso_mhz):\n\
+      \        \"\"\"Columnas de la grilla de frecuencia que cubre un paso del barrido.\"\
+      \"\"\n        ancho = max(float(paso_mhz), self.df)\n        i0 = int(np.floor((f_mhz\
+      \ - ancho / 2.0 - self.f_min) / self.df + 0.5))\n        i1 = int(np.floor((f_mhz\
+      \ + ancho / 2.0 - self.f_min) / self.df + 0.5))\n        i0, i1 = max(i0, 0),\
+      \ min(max(i1, i0 + 1), self.n_f)\n        return i0, i1\n\n    def work(self,\
+      \ input_items, output_items):\n        perfiles = input_items[0]\n        n\
+      \ = len(perfiles)\n        base = self.nitems_read(0)\n        info_en = {t.offset\
+      \ - base: pmt.to_python(t.value)\n                   for t in self.get_tags_in_window(0,\
+      \ 0, n, TAG_SONDEO)}\n        for j in range(n):\n            if j in info_en:\n\
+      \                self._info = info_en[j]\n            perfil = np.array(perfiles[j],\
+      \ dtype=np.float32)\n            piso = float(np.median(perfil)) or 1e-12\n\
+      \            perfil_db = 20.0 * np.log10(np.maximum(perfil, 1e-12) / piso)\n\
+      \            f = self._info.get('f_mhz')\n            with self.lock:\n    \
+      \            if f is not None and self.f_min - self.df <= f <= self.f_max +\
+      \ self.df:\n                    i0, i1 = self.columnas(f, self._info.get('paso_mhz',\
+      \ 0.0))\n                    self.matriz_db[i0:i1] = perfil_db\n           \
+      \         k = self._i_hmin + int(np.argmax(perfil_db[self._i_hmin:]))\n    \
+      \                detectado = perfil_db[k] >= float(self.umbral_db)\n       \
+      \             self.traza_h[i0:i1] = k * self.dh_km if detectado else np.nan\n\
+      \                    self.traza_db[i0:i1] = perfil_db[k] if detectado else np.nan\n\
+      \                self.contador += 1\n                self.ultimo = (self.contador,\
+      \ dict(self._info), perfil, perfil_db)\n                self.historial.append((dict(self._info),\
+      \ perfil_db))\n        return n\n"
+    affinity: ''
+    alias: ''
+    comment: 'Armado del ionograma h''(f):
+
+      ubica cada perfil en la columna
+
+      de su frecuencia (tag ''sondeo'')'
+    df_grilla: '0.05'
+    dh_km: dh_km
+    f_max: f_fin
+    f_min: f_ini
+    h_min_km: '80.0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    n_h: n_h
+    umbral_db: '14.0'
+  states:
+    _io_cache: '(''Armado del ionograma'', ''blk'', [(''n_h'', ''3200''), (''dh_km'',
+      ''0.7494811''), (''f_min'', ''1.0''), (''f_max'', ''20.0''), (''df_grilla'',
+      ''0.05''), (''umbral_db'', ''12.0''), (''h_min_km'', ''80.0'')], [(''0'', ''float'',
+      3200)], [], "Armado del ionograma h''(f): ubica cada perfil integrado en la
+      columna de su\n    frecuencia (leida del tag ''sondeo'') y detecta el eco mas
+      fuerte.", [''dh_km'', ''f_max'', ''f_min'', ''n_h'', ''umbral_db''])'
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [3016, 360]
+    rotation: 0
+    state: enabled
+- name: monitor_correl
+  id: epy_block
+  parameters:
+    _source_code: "\"\"\"\nMonitor de la compresion de pulso (solo visualizacion).\n\
+      \nEntradas (una muestra por muestra de disparo, n_vec por pareja):\n  0: salida\
+      \ del correlador A, 1: salida del correlador B, 2: suma A + B.\nCada 'cada_n_parejas'\
+      \ parejas copia los n_vec valores de cada entrada.\nUsa la misma regla que el\
+      \ monitor de la senal recibida, asi la GUI puede\ncomparar la misma pareja en\
+      \ los dos monitores.\n\"\"\"\nimport collections\nimport threading\nimport numpy\
+      \ as np\nimport pmt\nfrom gnuradio import gr\n\nTAG_SONDEO = pmt.intern('sondeo')\n\
+      \n\nclass blk(gr.sync_block):\n    \"\"\"Monitor (para la GUI): guarda cada\
+      \ tanto la salida de los correladores A y B\n    y de la suma A + B para una\
+      \ misma pareja de disparos.\"\"\"\n\n    def __init__(self, n_vec=3333, cada_n_parejas=6):\n\
+      \        gr.sync_block.__init__(self, name='Monitor compresion de pulso',\n\
+      \                               in_sig=[np.complex64, np.complex64, np.complex64],\
+      \ out_sig=None)\n        self._n = int(n_vec)\n        self._cada = max(1, int(cada_n_parejas))\n\
+      \        self._info = {}\n        self._cap = None\n        self.lock = threading.Lock()\n\
+      \        self.capturas = collections.deque(maxlen=8)   # (n_pareja, info, A,\
+      \ B, A+B)\n\n    def work(self, input_items, output_items):\n        n = len(input_items[0])\n\
+      \        base = self.nitems_read(2)\n        tags = sorted(self.get_tags_in_window(2,\
+      \ 0, n, TAG_SONDEO), key=lambda t: t.offset)\n        it = 0\n        i = 0\n\
+      \        while i < n:\n            pos = base + i\n            while it < len(tags)\
+      \ and tags[it].offset <= pos:\n                self._info = pmt.to_python(tags[it].value)\n\
+      \                it += 1\n            if self._cap is None:\n              \
+      \  resto = pos % self._n\n                if resto:\n                    i +=\
+      \ self._n - resto\n                    continue\n                pareja = pos\
+      \ // self._n\n                if pareja % self._cada:\n                    i\
+      \ += self._n\n                    continue\n                self._cap = [pareja,\
+      \ dict(self._info)] + \\\n                    [np.empty(self._n, np.complex64)\
+      \ for _ in range(3)] + [0]\n            cap = self._cap\n            k = min(self._n\
+      \ - cap[5], n - i)\n            for j in range(3):\n                cap[2 +\
+      \ j][cap[5]:cap[5] + k] = input_items[j][i:i + k]\n            cap[5] += k\n\
+      \            i += k\n            if cap[5] == self._n:\n                with\
+      \ self.lock:\n                    self.capturas.append(tuple(cap[:5]))\n   \
+      \             self._cap = None\n        while it < len(tags):\n            self._info\
+      \ = pmt.to_python(tags[it].value)\n            it += 1\n        return n\n"
+    affinity: ''
+    alias: ''
+    cada_n_parejas: '6'
+    comment: 'Monitor para la GUI:
+
+      salidas de los correladores'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    n_vec: n_vec
+  states:
+    _io_cache: '(''Monitor compresion de pulso'', ''blk'', [(''n_vec'', ''3333''),
+      (''cada_n_parejas'', ''6'')], [(''0'', ''complex'', 1), (''1'', ''complex'',
+      1), (''2'', ''complex'', 1)], [], ''Monitor (para la GUI): guarda cada tanto
+      la salida de los correladores A y B\n    y de la suma A + B para una misma pareja
+      de disparos.'', [])'
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1552, 568]
+    rotation: 0
+    state: enabled
+- name: monitor_rx
+  id: epy_block
+  parameters:
+    _source_code: "\"\"\"\nMonitor de la senal recibida (solo visualizacion, receptor\
+      \ real).\n\nCada 'cada_n_parejas' parejas copia una pareja completa de disparos\n\
+      (A y luego B = 2*n_vec muestras), junto con la informacion del tag 'sondeo'\n\
+      (frecuencia). La interfaz grafica lee el atributo 'capturas'.\n\"\"\"\nimport\
+      \ collections\nimport threading\nimport numpy as np\nimport pmt\nfrom gnuradio\
+      \ import gr\n\nTAG_SONDEO = pmt.intern('sondeo')\n\n\nclass blk(gr.sync_block):\n\
+      \    \"\"\"Monitor (para la GUI): guarda cada tanto una pareja de disparos A/B\n\
+      \    de la senal recibida.\"\"\"\n\n    def __init__(self, n_vec=3333, cada_n_parejas=6):\n\
+      \        gr.sync_block.__init__(self, name='Monitor senal recibida',\n     \
+      \                          in_sig=[np.complex64], out_sig=None)\n        self._n\
+      \ = 2 * int(n_vec)\n        self._cada = max(1, int(cada_n_parejas))\n     \
+      \   self._info = {}\n        self._cap = None\n        self.lock = threading.Lock()\n\
+      \        self.capturas = collections.deque(maxlen=8)   # (n_pareja, info, rx,\
+      \ None)\n\n    def work(self, input_items, output_items):\n        rx = input_items[0]\n\
+      \        n = len(rx)\n        base = self.nitems_read(0)\n        tags = sorted(self.get_tags_in_window(0,\
+      \ 0, n, TAG_SONDEO), key=lambda t: t.offset)\n        it = 0\n        i = 0\n\
+      \        while i < n:\n            pos = base + i\n            while it < len(tags)\
+      \ and tags[it].offset <= pos:\n                self._info = pmt.to_python(tags[it].value)\n\
+      \                it += 1\n            if self._cap is None:\n              \
+      \  resto = pos % self._n\n                if resto:                        \
+      \           # esperar el inicio de la pareja\n                    i += self._n\
+      \ - resto\n                    continue\n                pareja = pos // self._n\n\
+      \                if pareja % self._cada:\n                    i += self._n\n\
+      \                    continue\n                self._cap = [pareja, dict(self._info),\
+      \ np.empty(self._n, np.complex64), 0]\n            cap = self._cap\n       \
+      \     k = min(self._n - cap[3], n - i)\n            cap[2][cap[3]:cap[3] + k]\
+      \ = rx[i:i + k]\n            cap[3] += k\n            i += k\n            if\
+      \ cap[3] == self._n:\n                with self.lock:\n                    self.capturas.append((cap[0],\
+      \ cap[1], cap[2], None))\n                self._cap = None\n        while it\
+      \ < len(tags):\n            self._info = pmt.to_python(tags[it].value)\n   \
+      \         it += 1\n        return n\n"
+    affinity: ''
+    alias: ''
+    cada_n_parejas: '6'
+    comment: 'Monitor para la GUI:
+
+      senal recibida'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    n_vec: n_vec
+  states:
+    _io_cache: '(''Monitor senal recibida'', ''blk'', [(''n_vec'', ''3333''), (''cada_n_parejas'',
+      ''6'')], [(''0'', ''complex'', 1)], [], ''Monitor (para la GUI): guarda cada
+      tanto una pareja de disparos A/B\n    de la senal recibida.'', [])'
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1088, 568]
+    rotation: 0
+    state: enabled
+- name: perfil_c
+  id: blocks_stream_to_vector
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Un perfil complejo
+
+      por disparo'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_items: n_h
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1960, 296]
+    rotation: 0
+    state: enabled
+- name: perfil_i
+  id: blocks_stream_to_vector
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_items: n_h
+    type: float
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2152, 480]
+    rotation: 0
+    state: enabled
+- name: programador_barrido
+  id: epy_block
+  parameters:
+    K: K
+    _source_code: "\"\"\"\nProgramador del barrido de frecuencia (receptor real).\n\
+      \nDeja pasar la senal sin modificarla y, cada 2*K disparos (una frecuencia de\n\
+      sondeo = K parejas A/B), agrega en la primera muestra el tag\n'sondeo' = {f_mhz,\
+      \ paso_mhz, paso, n_pasos, barrido, modo}, el mismo que usa la\nsimulacion.\
+      \ Asi el armado del ionograma sabe a que frecuencia corresponde cada\nperfil\
+      \ integrado.\n\nAdemas publica por el puerto de mensajes 'freq' un diccionario\
+      \ {'freq': f_Hz}\nal empezar cada frecuencia, para sintonizar el hardware (TX\
+      \ y DDC de la Red\nPitaya). PENDIENTE: conectarlo al bloque que controle el\
+      \ hardware. El plan de\nbarrido supone que el transmisor cambia de frecuencia\
+      \ en el mismo instante\n(cada 2*K*n_vec muestras desde el arranque).\n\"\"\"\
+      \nimport numpy as np\nimport pmt\nfrom gnuradio import gr\n\nTAG_SONDEO = pmt.intern('sondeo')\n\
+      PUERTO_FREQ = pmt.intern('freq')\n\n\nclass blk(gr.sync_block):\n    \"\"\"\
+      Programador del barrido: marca cada frecuencia de sondeo con el tag 'sondeo'\n\
+      \    (cada 2*K disparos) y publica {'freq': Hz} por el puerto de mensajes 'freq'.\"\
+      \"\"\n\n    def __init__(self, n_vec=3333, K=25, modo_barrido=1, f_fija=5.0,\
+      \ f_ini=1.0, f_fin=20.0,\n                 paso_mhz=0.1):\n        gr.sync_block.__init__(self,\
+      \ name='Programador del barrido',\n                               in_sig=[np.complex64],\
+      \ out_sig=[np.complex64])\n        self.message_port_register_out(PUERTO_FREQ)\n\
+      \        self._muestras_por_paso = 2 * int(K) * int(n_vec)\n        # Parametros\
+      \ que se pueden cambiar en ejecucion (callbacks de GRC)\n        self.modo_barrido,\
+      \ self.f_fija = modo_barrido, f_fija\n        self.f_ini, self.f_fin, self.paso_mhz\
+      \ = f_ini, f_fin, paso_mhz\n        self._barrido = 0\n        self._i_paso\
+      \ = 0\n        self._frecuencias = None\n        self._clave_barrido = None\n\
+      \n    def _siguiente_frecuencia(self):\n        if int(self.modo_barrido) ==\
+      \ 0:\n            self._clave_barrido = None\n            f = float(self.f_fija)\n\
+      \            return f, {'f_mhz': f, 'paso_mhz': 0.0, 'paso': 0, 'n_pasos': 1,\n\
+      \                       'barrido': self._barrido, 'modo': 'fija'}\n        clave\
+      \ = (float(self.f_ini), float(self.f_fin), float(self.paso_mhz))\n        if\
+      \ clave != self._clave_barrido:          # cambio de barrido: empezar de nuevo\n\
+      \            f_ini, f_fin, paso = clave\n            self._frecuencias = np.round(np.arange(f_ini,\
+      \ f_fin + paso / 2.0, paso), 4)\n            self._clave_barrido = clave\n \
+      \           self._i_paso = 0\n            self._barrido += 1\n        elif self._i_paso\
+      \ >= len(self._frecuencias):\n            self._i_paso = 0\n            self._barrido\
+      \ += 1\n        f = float(self._frecuencias[self._i_paso])\n        info = {'f_mhz':\
+      \ f, 'paso_mhz': float(self.paso_mhz), 'paso': self._i_paso,\n             \
+      \   'n_pasos': len(self._frecuencias), 'barrido': self._barrido, 'modo': 'barrido'}\n\
+      \        self._i_paso += 1\n        return f, info\n\n    def work(self, input_items,\
+      \ output_items):\n        n = len(input_items[0])\n        output_items[0][:]\
+      \ = input_items[0]\n        inicio = self.nitems_written(0)\n        L = self._muestras_por_paso\n\
+      \        primero = -(-inicio // L) * L                 # proximo limite de frecuencia\n\
+      \        for offset in range(primero, inicio + n, L):\n            f, info =\
+      \ self._siguiente_frecuencia()\n            self.add_item_tag(0, offset, TAG_SONDEO,\
+      \ pmt.to_pmt(info))\n            self.message_port_pub(PUERTO_FREQ, pmt.to_pmt({'freq':\
+      \ f * 1e6}))\n        return n\n"
+    affinity: ''
+    alias: ''
+    comment: 'Programador del barrido: tag ''sondeo''
+
+      cada 2K disparos + mensaje ''freq''
+
+      (PENDIENTE: conectar a la sintonia
+
+      del hardware)'
+    f_fija: f_fija
+    f_fin: f_fin
+    f_ini: f_ini
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    modo_barrido: modo_barrido
+    n_vec: n_vec
+    paso_mhz: paso_mhz
+  states:
+    _io_cache: '(''Programador del barrido'', ''blk'', [(''n_vec'', ''3333''), (''K'',
+      ''25''), (''modo_barrido'', ''1''), (''f_fija'', ''5.0''), (''f_ini'', ''1.0''),
+      (''f_fin'', ''20.0''), (''paso_mhz'', ''0.1'')], [(''0'', ''complex'', 1)],
+      [(''0'', ''complex'', 1), (''freq'', ''message'', 1)], "Programador del barrido:
+      marca cada frecuencia de sondeo con el tag ''sondeo''\n    (cada 2*K disparos)
+      y publica {''freq'': Hz} por el puerto de mensajes ''freq''.", [''f_fija'',
+      ''f_fin'', ''f_ini'', ''modo_barrido'', ''paso_mhz''])'
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [816, 368]
+    rotation: 0
+    state: enabled
+- name: promedio
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Promedio: / K'
+    const: '[1.0 / K] * n_h'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: n_h
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2800, 384]
+    rotation: 0
+    state: enabled
+- name: selector_golay
+  id: blocks_deinterleave
+  parameters:
+    affinity: ''
+    alias: ''
+    blocksize: n_vec
+    comment: 'Selector Golay A/B:
+
+      bloques de n_vec muestras.
+
+      Disparo par -> A, impar -> B'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_streams: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1088, 376]
+    rotation: 0
+    state: enabled
+- name: suma_qcc
+  id: blocks_add_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Suma QCC: A + B
+
+      (I y Q por separado)
+
+      cancela los lobulos'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1552, 376]
+    rotation: 0
+    state: enabled
+- name: tipo_integracion
+  id: blocks_selector
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Elige la integracion
+
+      (0 = coherente)'
+    enabled: 'True'
+    input_index: integracion
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    num_outputs: '1'
+    output_index: '0'
+    showports: 'True'
+    type: float
+    vlen: n_h
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [2600, 376]
+    rotation: 0
+    state: enabled
+- name: ventana_alturas
+  id: blocks_keep_m_in_n
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Ventana de alturas: descarta
+
+      las h_off muestras iniciales
+
+      -> h'' = 0 ... 2398 km'
+    m: n_h
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    n: n_vec
+    offset: h_off
+    type: complex
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1720, 376]
+    rotation: 0
+    state: enabled
+- name: zeromq_pub_sink_0
+  id: zeromq_pub_sink
+  parameters:
+    address: zmq_addr
+    affinity: ''
+    alias: ''
+    bind: 'True'
+    comment: 'Perfiles promediados (n_h alturas)
+
+      -> ionogram_gui.py'
+    drop_on_hwm: 'True'
+    hwm: '-1'
+    key: ''''''
+    pass_tags: 'False'
+    timeout: '100'
+    type: float
+    vlen: n_h
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [3016, 488]
+    rotation: 0
+    state: enabled
+- name: zeromq_sub_source_0
+  id: zeromq_sub_source
+  parameters:
+    address: '''tcp://127.0.0.1:5556'''
+    affinity: ''
+    alias: ''
+    bind: 'False'
+    comment: 'Fuente alternativa por ZMQ.
+
+      Habilitarla y deshabilitar la rama IIO.'
+    hwm: '-1'
+    key: ''''''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    pass_tags: 'False'
+    timeout: '100'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [272, 512]
+    rotation: 0
+    state: disabled
+
+connections:
+- [alineacion_disparo, '0', programador_barrido, '0']
+- [blocks_float_to_complex_0, '0', alineacion_disparo, '0']
+- [blocks_short_to_float_0, '0', blocks_float_to_complex_0, '0']
+- [blocks_short_to_float_1, '0', blocks_float_to_complex_0, '1']
+- [correlador_A, '0', monitor_correl, '0']
+- [correlador_A, '0', suma_qcc, '0']
+- [correlador_B, '0', monitor_correl, '1']
+- [correlador_B, '0', suma_qcc, '1']
+- [envolvente_c, '0', tipo_integracion, '0']
+- [envolvente_i, '0', perfil_i, '0']
+- [iio_device_source_0, '0', blocks_short_to_float_0, '0']
+- [iio_device_source_0, '1', blocks_short_to_float_1, '0']
+- [integrador_coherente, '0', envolvente_c, '0']
+- [integrador_incoherente, '0', tipo_integracion, '1']
+- [perfil_c, '0', integrador_coherente, '0']
+- [perfil_i, '0', integrador_incoherente, '0']
+- [programador_barrido, '0', monitor_rx, '0']
+- [programador_barrido, '0', selector_golay, '0']
+- [promedio, '0', ionograma, '0']
+- [promedio, '0', zeromq_pub_sink_0, '0']
+- [selector_golay, '0', correlador_A, '0']
+- [selector_golay, '1', correlador_B, '0']
+- [suma_qcc, '0', monitor_correl, '2']
+- [suma_qcc, '0', ventana_alturas, '0']
+- [tipo_integracion, '0', promedio, '0']
+- [ventana_alturas, '0', envolvente_i, '0']
+- [ventana_alturas, '0', perfil_c, '0']
+- [zeromq_sub_source_0, '0', alineacion_disparo, '0']
+
+metadata:
+  file_format: 1
+  grc_version: 3.10.12.0
