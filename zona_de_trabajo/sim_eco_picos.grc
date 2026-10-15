@@ -1,0 +1,590 @@
+options:
+  parameters:
+    author: Juanjo
+    catch_exceptions: 'True'
+    category: '[GRC Hier Blocks]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: 'Receptor de sondador ionosferico: Golay 16 bits + QCC (Red Pitaya
+      SDRlab 122-16)'
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: ionosonde_rx_sim
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: Sondador ionosferico - Receptor Golay/QCC (SIMULACION)
+    window_size: (1000,1000)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: K
+  id: variable
+  parameters:
+    comment: Parejas A/B integradas
+    value: '25'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [784, 28.0]
+    rotation: 0
+    state: enabled
+- name: c
+  id: variable
+  parameters:
+    comment: ''
+    value: '299792458.0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1288, 28.0]
+    rotation: 0
+    state: enabled
+- name: code_A
+  id: variable
+  parameters:
+    comment: ''
+    value: '[1, 1, 1, -1, 1, 1, -1, 1, 1, 1, 1, -1, -1, -1, 1, -1]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 92]
+    rotation: 0
+    state: enabled
+- name: code_B
+  id: variable
+  parameters:
+    comment: ''
+    value: '[1, 1, 1, -1, 1, 1, -1, 1, -1, -1, -1, 1, 1, 1, -1, 1]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 156.0]
+    rotation: 0
+    state: enabled
+- name: dh_km
+  id: variable
+  parameters:
+    comment: Altura por muestra = 0.75 km (h' = c t / 2)
+    value: c / (2.0 * samp_rate) / 1000.0
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [928, 20.0]
+    rotation: 0
+    state: enabled
+- name: h_E
+  id: variable
+  parameters:
+    comment: Altura virtual eco capa E [km]
+    value: '110'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [16, 388.0]
+    rotation: 0
+    state: enabled
+- name: h_F
+  id: variable
+  parameters:
+    comment: Altura virtual eco capa F [km]
+    value: '300'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [16, 468.0]
+    rotation: 0
+    state: enabled
+- name: n_vec
+  id: variable
+  parameters:
+    comment: 'Muestras por PRT = 3333.
+
+      200000/60 = 3333.33 -> deriva 1/3 muestra por disparo.'
+    value: int(samp_rate // prf)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [408, 100.0]
+    rotation: 0
+    state: enabled
+- name: noise_amp
+  id: variable
+  parameters:
+    comment: Desvio del ruido (por muestra)
+    value: '0.5'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [288, 396.0]
+    rotation: 0
+    state: enabled
+- name: prf
+  id: variable
+  parameters:
+    comment: Frecuencia de repeticion de pulso [Hz]
+    value: '60'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [792, 116.0]
+    rotation: 0
+    state: enabled
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: Frecuencia de muestreo en banda base (DDC en la FPGA)
+    value: '200000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [200, 12]
+    rotation: 0
+    state: enabled
+- name: sim_sig
+  id: variable
+  parameters:
+    comment: Dos disparos (A y B) con ecos E y F, repetidos indefinidamente
+    value: np.concatenate([np.roll(np.pad(np.repeat(cd, spb), (0, n_vec - 16 * spb)).astype(complex),
+      int(round(h_E / dh_km))) * 0.05 + np.roll(np.pad(np.repeat(cd, spb), (0, n_vec
+      - 16 * spb)).astype(complex), int(round(h_F / dh_km))) * 0.1 * np.exp(1j * 0.7)
+      for cd in (code_A, code_B)]).tolist()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 556.0]
+    rotation: 0
+    state: enabled
+- name: spb
+  id: variable
+  parameters:
+    comment: Muestras por chip (30 us x 200 kS/s)
+    value: '6'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [528, 12]
+    rotation: 0
+    state: enabled
+- name: swap_ab
+  id: variable_qtgui_check_box
+  parameters:
+    comment: 'Marcar si la rama A esta recibiendo los disparos B
+
+      (el demux arranca en la fase equivocada).'
+    'false': '0'
+    gui_hint: 0,0,1,1
+    label: '''Intercambiar A/B'''
+    'true': '1'
+    type: int
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1424, 196.0]
+    rotation: 0
+    state: enabled
+- name: taps_A
+  id: variable
+  parameters:
+    comment: 'Filtro adaptado A: codigo invertido y sobremuestreado x6'
+    value: np.repeat(code_B if swap_ab else code_A, spb)[::-1].astype(complex).tolist()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1416, 20.0]
+    rotation: 0
+    state: enabled
+- name: taps_B
+  id: variable
+  parameters:
+    comment: Filtro adaptado B
+    value: np.repeat(code_A if swap_ab else code_B, spb)[::-1].astype(complex).tolist()
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1424, 108.0]
+    rotation: 0
+    state: enabled
+- name: analog_noise_source_x_0
+  id: analog_noise_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    amp: noise_amp
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_type: analog.GR_GAUSSIAN
+    seed: '0'
+    type: complex
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [16, 292.0]
+    rotation: 0
+    state: enabled
+- name: blocks_add_xx_0
+  id: blocks_add_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: 'Suma complementaria QCC: A + B'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: complex
+    vlen: n_vec
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1176, 288]
+    rotation: 0
+    state: enabled
+- name: blocks_add_xx_sim
+  id: blocks_add_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_inputs: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [264, 272]
+    rotation: 0
+    state: enabled
+- name: blocks_complex_to_mag_0
+  id: blocks_complex_to_mag
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: Envolvente |Z|
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    vlen: n_vec
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1168, 460.0]
+    rotation: 180
+    state: enabled
+- name: blocks_deinterleave_0
+  id: blocks_deinterleave
+  parameters:
+    affinity: ''
+    alias: ''
+    blocksize: n_vec
+    comment: 'Segmentacion por PRT + selector Golay:
+
+      bloque par -> A, bloque impar -> B'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_streams: '2'
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [552, 368.0]
+    rotation: 0
+    state: enabled
+- name: blocks_integrate_xx_0
+  id: blocks_integrate_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: Suma de K perfiles
+    decim: '10'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: n_vec
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [944, 452.0]
+    rotation: 180
+    state: enabled
+- name: blocks_multiply_const_vxx_0
+  id: blocks_multiply_const_vxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: Promedio (/K)
+    const: '[1.0 / 10.0] * n_vec'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    type: float
+    vlen: n_vec
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [724.0, 536]
+    rotation: 270
+    state: enabled
+- name: blocks_stream_to_vector_A
+  id: blocks_stream_to_vector
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_items: n_vec
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1000, 232.0]
+    rotation: 0
+    state: enabled
+- name: blocks_stream_to_vector_B
+  id: blocks_stream_to_vector
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_items: n_vec
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1016, 392.0]
+    rotation: 0
+    state: enabled
+- name: blocks_throttle_0
+  id: blocks_throttle2
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    ignoretag: 'True'
+    limit: auto
+    maximum: '0.1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samples_per_second: samp_rate
+    type: complex
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [432, 272]
+    rotation: 0
+    state: enabled
+- name: blocks_vector_source_x_0
+  id: blocks_vector_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    repeat: 'True'
+    tags: '[]'
+    type: complex
+    vector: sim_sig
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [16, 188.0]
+    rotation: 0
+    state: enabled
+- name: filter_fir_filter_A
+  id: fir_filter_xxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: Correlador A
+    decim: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_delay: '0'
+    taps: taps_A
+    type: ccc
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [792, 252.0]
+    rotation: 0
+    state: enabled
+- name: filter_fir_filter_B
+  id: fir_filter_xxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: Correlador B
+    decim: '1'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samp_delay: '0'
+    taps: taps_B
+    type: ccc
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [792, 352]
+    rotation: 0
+    state: enabled
+- name: import_0
+  id: import
+  parameters:
+    alias: ''
+    comment: ''
+    imports: import numpy as np
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [16, 132.0]
+    rotation: 0
+    state: enabled
+- name: qtgui_vector_sink_f_0
+  id: qtgui_vector_sink_f
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    average: '1.0'
+    color1: '"blue"'
+    color10: '"dark blue"'
+    color2: '"red"'
+    color3: '"green"'
+    color4: '"black"'
+    color5: '"cyan"'
+    color6: '"magenta"'
+    color7: '"yellow"'
+    color8: '"dark red"'
+    color9: '"dark green"'
+    comment: ''
+    grid: 'True'
+    gui_hint: 1,0,1,2
+    label1: ''
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    legend: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    name: '''Perfil de altura virtual'''
+    nconnections: '1'
+    ref_level: '0'
+    showports: 'False'
+    update_time: '0.10'
+    vlen: n_vec
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    x_axis_label: '''Altura virtual h [km]'''
+    x_start: -(16 * spb - 1) * dh_km
+    x_step: dh_km
+    x_units: '''km'''
+    y_axis_label: '''Amplitud'''
+    y_units: ''''''
+    ymax: '25'
+    ymin: '-5'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [864, 668.0]
+    rotation: 0
+    state: enabled
+
+connections:
+- [analog_noise_source_x_0, '0', blocks_add_xx_sim, '1']
+- [blocks_add_xx_0, '0', blocks_complex_to_mag_0, '0']
+- [blocks_add_xx_sim, '0', blocks_throttle_0, '0']
+- [blocks_complex_to_mag_0, '0', blocks_integrate_xx_0, '0']
+- [blocks_deinterleave_0, '0', filter_fir_filter_A, '0']
+- [blocks_deinterleave_0, '1', filter_fir_filter_B, '0']
+- [blocks_integrate_xx_0, '0', blocks_multiply_const_vxx_0, '0']
+- [blocks_multiply_const_vxx_0, '0', qtgui_vector_sink_f_0, '0']
+- [blocks_stream_to_vector_A, '0', blocks_add_xx_0, '0']
+- [blocks_stream_to_vector_B, '0', blocks_add_xx_0, '1']
+- [blocks_throttle_0, '0', blocks_deinterleave_0, '0']
+- [blocks_vector_source_x_0, '0', blocks_add_xx_sim, '0']
+- [filter_fir_filter_A, '0', blocks_stream_to_vector_A, '0']
+- [filter_fir_filter_B, '0', blocks_stream_to_vector_B, '0']
+
+metadata:
+  file_format: 1
+  grc_version: 3.10.7.0
