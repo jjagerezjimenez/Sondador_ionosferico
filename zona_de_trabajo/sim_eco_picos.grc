@@ -67,7 +67,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [200, 92]
+    coordinate: [200, 112.0]
     rotation: 0
     state: enabled
 - name: code_B
@@ -79,7 +79,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [200, 156.0]
+    coordinate: [200, 184.0]
     rotation: 0
     state: enabled
 - name: dh_km
@@ -124,7 +124,7 @@ blocks:
     comment: 'Muestras por PRT = 3333.
 
       200000/60 = 3333.33 -> deriva 1/3 muestra por disparo.'
-    value: int(samp_rate // prf)
+    value: '4096'
   states:
     bus_sink: false
     bus_source: false
@@ -148,7 +148,7 @@ blocks:
   id: variable
   parameters:
     comment: Frecuencia de repeticion de pulso [Hz]
-    value: '60'
+    value: samp_rate / 4096
   states:
     bus_sink: false
     bus_source: false
@@ -175,7 +175,7 @@ blocks:
     value: np.concatenate([np.roll(np.pad(np.repeat(cd, spb), (0, n_vec - 16 * spb)).astype(complex),
       int(round(h_E / dh_km))) * 0.05 + np.roll(np.pad(np.repeat(cd, spb), (0, n_vec
       - 16 * spb)).astype(complex), int(round(h_F / dh_km))) * 0.1 * np.exp(1j * 0.7)
-      for cd in (code_A, code_B)]).tolist()
+      for cd in (code_A, code_B)]).astype(np.complex64)
   states:
     bus_sink: false
     bus_source: false
@@ -257,6 +257,29 @@ blocks:
     coordinate: [16, 292.0]
     rotation: 0
     state: enabled
+- name: analog_sig_source_x_0
+  id: analog_sig_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    amp: '1'
+    comment: ''
+    freq: '1000'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '0'
+    phase: '0'
+    samp_rate: samp_rate
+    showports: 'False'
+    type: complex
+    waveform: analog.GR_CONST_WAVE
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [336, 504.0]
+    rotation: 0
+    state: disabled
 - name: blocks_add_xx_0
   id: blocks_add_xx
   parameters:
@@ -318,7 +341,7 @@ blocks:
     comment: 'Segmentacion por PRT + selector Golay:
 
       bloque par -> A, bloque impar -> B'
-    maxoutbuf: '0'
+    maxoutbuf: n_vec * 2
     minoutbuf: '0'
     num_streams: '2'
     type: complex
@@ -336,7 +359,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: Suma de K perfiles
-    decim: '10'
+    decim: K
     maxoutbuf: '0'
     minoutbuf: '0'
     type: float
@@ -354,7 +377,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: Promedio (/K)
-    const: '[1.0 / 10.0] * n_vec'
+    const: '[1.0 / K] * n_vec'
     maxoutbuf: '0'
     minoutbuf: '0'
     type: float
@@ -429,7 +452,7 @@ blocks:
     affinity: ''
     alias: ''
     comment: ''
-    maxoutbuf: '0'
+    maxoutbuf: n_vec * 2
     minoutbuf: '0'
     repeat: 'True'
     tags: '[]'
@@ -571,6 +594,7 @@ blocks:
 
 connections:
 - [analog_noise_source_x_0, '0', blocks_add_xx_sim, '1']
+- [analog_sig_source_x_0, '0', blocks_add_xx_sim, '0']
 - [blocks_add_xx_0, '0', blocks_complex_to_mag_0, '0']
 - [blocks_add_xx_sim, '0', blocks_throttle_0, '0']
 - [blocks_complex_to_mag_0, '0', blocks_integrate_xx_0, '0']
@@ -587,4 +611,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.7.0
+  grc_version: 3.10.12.0
